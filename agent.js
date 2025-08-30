@@ -3,7 +3,12 @@
  * v2.8.0 (Updated: AI Pipe integration + bug fixes)
  * Author: Gaurav Tomar (Original) & Assistant (fixes)
  */
-const ENV_API_KEY = process.env.NEXT_PUBLIC_API_KEY || null;
+
+// Safe attempt at reading an injected env key. In a client build, process.env
+// may be replaced at build-time. Also allow a global window var, if you set it.
+const ENV_API_KEY = (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_API_KEY)
+    ? process.env.NEXT_PUBLIC_API_KEY
+    : (typeof window !== 'undefined' && window.NEXT_PUBLIC_API_KEY) ? window.NEXT_PUBLIC_API_KEY : null;
 
 class GyaanSetu {
     constructor() {
@@ -46,6 +51,7 @@ class GyaanSetu {
         this.init();
     }
 
+    // ---------- Initialization ----------
     async init() {
         try {
             await this.showLoadingScreen();
@@ -419,6 +425,22 @@ class GyaanSetu {
     }
 
     // ---------- LLM calls ----------
+
+    // Helper: determine which API key to use for a provider.
+    // Prefer an env-injected key (ENV_API_KEY) for server-proxied / build-time keys,
+    // otherwise use the key typed into settings UI.
+    getEffectiveApiKey(provider) {
+        // If provider is 'aipipe' you might prefer to use env key if present
+        // (useful when deploying to Vercel and you put a public token in NEXT_PUBLIC_API_KEY).
+        // WARNING: NEXT_PUBLIC is visible to clients. For true secrets, use server-side functions.
+        const uiKey = document?.getElementById ? (document.getElementById('api-key')?.value || '') : '';
+        if (provider === 'aipipe') {
+            return ENV_API_KEY || uiKey || null;
+        }
+        // For others, prefer UI value, fallback to env
+        return uiKey || ENV_API_KEY || null;
+    }
+
     async callLLM(conversation) {
         // Build messages in provider-agnostic shape (OpenAI chat style)
         const messagesForApi = conversation.messages.map(m => {
@@ -427,11 +449,14 @@ class GyaanSetu {
             return { role: m.role, content: typeof m.content === 'string' ? m.content : JSON.stringify(m.content) };
         }).filter(m => !!m.content);
 
-        const { provider, apiKey, model, maxTokens, temperature } = this.state.settings.llm || {};
+        const { provider, apiKey: configuredApiKey, model, maxTokens, temperature } = this.state.settings.llm || {};
         if (!provider) throw new Error('No LLM provider configured.');
 
+        // Determine effective key (either user-entered or injected env)
+        const effectiveKey = this.getEffectiveApiKey(provider);
+
         // Demo mode fallback
-        if (!apiKey) {
+        if (!effectiveKey) {
             // return a local mock response
             return { choices: [{ message: { content: "Demo response: provide an API key in settings to use real models." } }] };
         }
@@ -441,13 +466,13 @@ class GyaanSetu {
         switch (provider) {
             case 'openai':
                 apiUrl = 'https://api.openai.com/v1/chat/completions';
-                headers.Authorization = `Bearer ${apiKey}`;
+                headers.Authorization = `Bearer ${effectiveKey}`;
                 body = { model, messages: messagesForApi, max_tokens: maxTokens, temperature };
                 break;
 
             case 'google':
                 // maps to Google Generative API
-                apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${effectiveKey}`;
                 // google uses API key in query string; keep content
                 body = {
                     messages: messagesForApi.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', content: m.content })),
@@ -457,10 +482,8 @@ class GyaanSetu {
 
             case 'aipipe':
                 // AI Pipe acts as a proxy. We'll send to its OpenRouter-compatible endpoint by default.
-                // AI Pipe docs: https://aipipe.org/  — supports endpoints like /openrouter/v1/chat/completions and /openai/v1/...
-                // We'll prioritize openrouter-style endpoint
                 apiUrl = 'https://aipipe.org/openrouter/v1/chat/completions';
-                headers.Authorization = `Bearer ${apiKey}`;
+                headers.Authorization = `Bearer ${effectiveKey}`;
                 body = {
                     model: model || 'openai/gpt-4o-mini', // fallback
                     messages: messagesForApi.map(m => ({ role: m.role, content: m.content })),
@@ -480,9 +503,7 @@ class GyaanSetu {
                 // attempt to parse error body
                 let errText = `${resp.status} ${resp.statusText}`;
                 try { const errJson = await resp.json(); errText = errJson.error?.message || JSON.stringify(errJson); } catch (_) {}
-                // throw new Error(`API Error (${resp.status}): ${errText}`);
                 throw new Error(`Model not supported for your API key — change model in settings. (Status: ${resp.status}, Details: ${errText})`);
-
             }
             const data = await resp.json();
             return data;
@@ -800,9 +821,9 @@ class GyaanSetu {
             let models = this.cache.get(`models_${provider}`);
             if (!models) {
                 switch (provider) {
-                    case 'openai': models = await this.fetchOpenAIModels(); break;
+                    case 'openai': models = await this.fetchOpenAIModels(provider); break;
                     case 'anthropic': models = await this.fetchAnthropicModels(); break;
-                    case 'google': models = await this.fetchGoogleModels(); break;
+                    case 'google': models = await this.fetchGoogleModels(provider); break;
                     case 'aipipe': models = await this.fetchAIpipeModels(); break;
                     default: models = ['default-local-model'];
                 }
@@ -827,19 +848,19 @@ class GyaanSetu {
         }
     }
 
-    async fetchOpenAIModels() {
-        const apiKey = provider === 'aipipe' ? ENV_API_KEY : document.getElementById('api-key')?.value;
+    async fetchOpenAIModels(provider = 'openai') {
+        const apiKey = this.getEffectiveApiKey(provider);
         if (!apiKey) throw new Error("API Key required for OpenAI");
         const response = await fetch('https://api.openai.com/v1/models', { headers: { 'Authorization': `Bearer ${apiKey}` } });
         if (!response.ok) { const err = await response.json().catch(()=>({})); throw new Error(err.error?.message || 'Invalid OpenAI Key'); }
         const data = await response.json();
-        return data.data.filter(m => m.id && m.id.includes('gpt')).map(model => model.id).sort().reverse();
+        return (data.data || []).filter(m => m.id && m.id.includes('gpt')).map(model => model.id).sort().reverse();
     }
 
     async fetchAnthropicModels() { return ["claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"]; }
 
-    async fetchGoogleModels() {
-        const apiKey = provider === 'aipipe' ? ENV_API_KEY : document.getElementById('api-key')?.value;
+    async fetchGoogleModels(provider = 'google') {
+        const apiKey = this.getEffectiveApiKey(provider);
         if (!apiKey) throw new Error("API Key required for Google");
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
         if (!response.ok) { const err = await response.json().catch(() => ({})); throw new Error(err.error?.message || 'Invalid Google Key'); }
@@ -849,7 +870,7 @@ class GyaanSetu {
 
     // AI Pipe models fetch — attempts to list models via proxy endpoints
     async fetchAIpipeModels() {
-        const token = document.getElementById('api-key')?.value;
+        const token = this.getEffectiveApiKey('aipipe');
         if (!token) throw new Error("AI Pipe token required");
         // Try OpenRouter models endpoint first then OpenAI models endpoint
         const candidateSets = [];
