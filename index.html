@@ -1,144 +1,87 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SynapseAI — Browser LLM Agent</title>
-  <meta name="description" content="SynapseAI — lightweight browser-based LLM agent (AI Pipe / OpenAI) with simple tools." />
-  <meta name="theme-color" content="#4f46e5" />
-
-  <!-- Fonts & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-  <!-- Highlight.js for code blocks -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SynapseAI – Smart Chat Agent</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- Loading overlay -->
+  <!-- Loading Screen -->
   <div id="loading" class="loading">
-    <div class="loader">
-      <i class="fas fa-project-diagram fa-2x"></i>
-      <div class="title">SynapseAI</div>
-      <div class="sub">Initializing agent...</div>
-    </div>
+    <h1>SynapseAI</h1>
+    <p>Initializing agent...</p>
   </div>
 
-  <div id="app" class="app">
-    <!-- nav -->
-    <header class="nav">
-      <div class="nav-left">
-        <i class="fas fa-project-diagram logo"></i>
-        <div class="brand">
-          <div class="name">SynapseAI</div>
-          <div class="tag">LLM Agent • Multi-tool POC</div>
+  <!-- App Container -->
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <header>
+        <h2>SynapseAI</h2>
+        <button id="new-conv" class="btn">+ New</button>
+      </header>
+      <div id="conversations" class="conversations"></div>
+      <footer>
+        <button id="settings-open" class="btn small">⚙️ Settings</button>
+        <button id="theme-toggle" class="btn small">🌙</button>
+      </footer>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="chat">
+      <header class="chat-header">
+        <h3 id="chat-title">New chat</h3>
+        <div class="chat-actions">
+          <button id="export-btn" class="btn small">⬇ Export</button>
+          <button id="clear-btn" class="btn small">🗑 Clear</button>
         </div>
-      </div>
-
-      <div class="nav-right">
-        <button id="theme-toggle" class="icon-btn" title="Toggle theme"><i class="fas fa-moon"></i></button>
-        <button id="settings-open" class="icon-btn" title="Settings"><i class="fas fa-cog"></i></button>
-      </div>
-    </header>
-
-    <!-- layout: sidebar + main -->
-    <div class="layout">
-      <aside class="sidebar">
-        <div class="side-top">
-          <div class="side-title">Conversations</div>
-          <button id="new-conv" class="btn primary">New</button>
-        </div>
-
-        <div id="conversations" class="conversations">
-          <!-- conversation items appended here -->
-        </div>
-
-        <div class="side-footer">
-          <small>SynapseAI • Proof of Concept</small>
-        </div>
-      </aside>
-
-      <main class="main">
-        <div class="chat-header">
-          <div>
-            <h2 id="chat-title">Welcome to SynapseAI</h2>
-            <p class="muted" id="chat-sub">Type a prompt. Press Enter to send. Example: "Summarize recent AI research."</p>
-          </div>
-          <div class="header-actions">
-            <button id="export-btn" class="btn outline">Export</button>
-            <button id="clear-btn" class="btn outline danger">Clear</button>
-          </div>
-        </div>
-
-        <section id="messages" class="messages">
-          <div id="welcome" class="welcome">
-            <h3>Capabilities</h3>
-            <div class="caps">
-              <div class="cap"><i class="fas fa-search"></i><div>Web Search</div></div>
-              <div class="cap"><i class="fas fa-code"></i><div>JS Sandbox</div></div>
-              <div class="cap"><i class="fas fa-network-wired"></i><div>AI Pipe / OpenAI</div></div>
-            </div>
-            <div class="quick">
-              <button class="quick-btn" data-prompt="Research the latest advances in multimodal LLMs.">Research LLMs</button>
-              <button class="quick-btn" data-prompt="Show me an example of a debounce function in JS.">Show JS Example</button>
-            </div>
-          </div>
-        </section>
-
-        <form id="composer" class="composer" action="javascript:void(0)" autocomplete="off">
-          <textarea id="input" placeholder="Ask SynapseAI... (Enter = send, Shift+Enter = newline)"></textarea>
-          <div class="composer-actions">
-            <button id="send" class="btn primary" title="Send"><i class="fas fa-paper-plane"></i></button>
-            <button id="attach" class="btn outline" title="Attach (not implemented)"><i class="fas fa-paperclip"></i></button>
-          </div>
-        </form>
-      </main>
-    </div>
-  </div>
-
-  <!-- settings modal -->
-  <div id="modal" class="modal" aria-hidden="true">
-    <div class="modal-panel">
-      <header class="modal-head">
-        <div>
-          <h3>Settings</h3>
-          <small>Configure provider & API key (keys stored in localStorage only)</small>
-        </div>
-        <button id="modal-close" class="icon-btn"><i class="fas fa-times"></i></button>
       </header>
 
-      <section class="modal-body">
-        <label>Provider</label>
-        <select id="provider">
-          <option value="aipipe">AI Pipe (recommended)</option>
-          <option value="openai">OpenAI</option>
-        </select>
-
-        <label>API Key</label>
-        <input id="apikey" type="password" placeholder="Paste your API key (AI Pipe/OpenAI)">
-
-        <label>Model</label>
-        <input id="model" type="text" placeholder="openai/gpt-4o-mini or other (optional)">
-
-        <label>Max tokens</label>
-        <input id="maxtokens" type="number" min="128" max="8000" value="1500">
-
-        <div class="modal-actions">
-          <button id="save-settings" class="btn primary">Save</button>
-          <button id="reset-settings" class="btn outline">Reset</button>
+      <div id="welcome" class="welcome">
+        <h2>👋 Welcome to SynapseAI</h2>
+        <p>Start typing a message or try a quick prompt below:</p>
+        <div class="quick-container">
+          <button class="quick-btn" data-prompt="Summarize this text: ...">Summarize</button>
+          <button class="quick-btn" data-prompt="Explain quantum computing in simple terms">Quantum</button>
+          <button class="quick-btn" data-prompt="Write a motivational quote">Motivate</button>
         </div>
+      </div>
 
-        <hr />
-        <div class="notice">
-          <strong>Privacy note:</strong> keys stay in your browser localStorage. For a shared key, host a server-side proxy and set an env var `AIPIPE_API_KEY`.
-        </div>
-      </section>
+      <div id="messages" class="messages"></div>
+
+      <form id="composer" class="composer">
+        <textarea id="input" placeholder="Type your message..." rows="1"></textarea>
+        <button id="send" type="submit" class="btn">Send</button>
+      </form>
+    </main>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <header>
+        <h2>⚙️ Settings</h2>
+        <button id="modal-close" class="btn small">✖</button>
+      </header>
+      <div class="modal-body">
+        <label>Provider
+          <select id="provider">
+            <option value="aipipe">AI Pipe</option>
+            <option value="openai">OpenAI</option>
+          </select>
+        </label>
+        <label>API Key <input id="apikey" type="password" placeholder="Paste your API key here" /></label>
+        <label>Model <input id="model" type="text" placeholder="e.g. openai/gpt-4o-mini" /></label>
+        <label>Max Tokens <input id="maxtokens" type="number" value="1500" /></label>
+      </div>
+      <footer>
+        <button id="save-settings" class="btn">Save</button>
+        <button id="reset-settings" class="btn">Reset</button>
+      </footer>
     </div>
   </div>
 
-  <script src="agent.js" defer></script>
+  <script src="agent.js"></script>
 </body>
 </html>
