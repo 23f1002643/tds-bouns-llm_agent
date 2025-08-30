@@ -2,86 +2,95 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SynapseAI – Smart Chat Agent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="SynapseAI - Modern AI Agent with multi-tool reasoning, search, and code execution" />
+  <meta name="theme-color" content="#4f46e5" />
+  <title>SynapseAI</title>
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Highlight.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <!-- Styles -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <!-- Loading Screen -->
-  <div id="loading" class="loading">
-    <h1>SynapseAI</h1>
-    <p>Initializing agent...</p>
-  </div>
-
-  <!-- App Container -->
-  <div class="app">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <header>
-        <h2>SynapseAI</h2>
-        <button id="new-conv" class="btn">+ New</button>
-      </header>
-      <div id="conversations" class="conversations"></div>
-      <footer>
-        <button id="settings-open" class="btn small">⚙️ Settings</button>
-        <button id="theme-toggle" class="btn small">🌙</button>
-      </footer>
-    </aside>
-
-    <!-- Main Chat Area -->
-    <main class="chat">
-      <header class="chat-header">
-        <h3 id="chat-title">New chat</h3>
-        <div class="chat-actions">
-          <button id="export-btn" class="btn small">⬇ Export</button>
-          <button id="clear-btn" class="btn small">🗑 Clear</button>
-        </div>
-      </header>
-
-      <div id="welcome" class="welcome">
-        <h2>👋 Welcome to SynapseAI</h2>
-        <p>Start typing a message or try a quick prompt below:</p>
-        <div class="quick-container">
-          <button class="quick-btn" data-prompt="Summarize this text: ...">Summarize</button>
-          <button class="quick-btn" data-prompt="Explain quantum computing in simple terms">Quantum</button>
-          <button class="quick-btn" data-prompt="Write a motivational quote">Motivate</button>
-        </div>
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-content text-center">
+      <i class="fas fa-brain fa-3x text-primary mb-3"></i>
+      <h2 class="fw-bold">SynapseAI</h2>
+      <p class="text-muted">Initializing agent...</p>
+      <div class="progress mt-3" style="height:6px;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:100%;"></div>
       </div>
-
-      <div id="messages" class="messages"></div>
-
-      <form id="composer" class="composer">
-        <textarea id="input" placeholder="Type your message..." rows="1"></textarea>
-        <button id="send" type="submit" class="btn">Send</button>
-      </form>
-    </main>
-  </div>
-
-  <!-- Settings Modal -->
-  <div id="modal" class="modal" aria-hidden="true">
-    <div class="modal-content">
-      <header>
-        <h2>⚙️ Settings</h2>
-        <button id="modal-close" class="btn small">✖</button>
-      </header>
-      <div class="modal-body">
-        <label>Provider
-          <select id="provider">
-            <option value="aipipe">AI Pipe</option>
-            <option value="openai">OpenAI</option>
-          </select>
-        </label>
-        <label>API Key <input id="apikey" type="password" placeholder="Paste your API key here" /></label>
-        <label>Model <input id="model" type="text" placeholder="e.g. openai/gpt-4o-mini" /></label>
-        <label>Max Tokens <input id="maxtokens" type="number" value="1500" /></label>
-      </div>
-      <footer>
-        <button id="save-settings" class="btn">Save</button>
-        <button id="reset-settings" class="btn">Reset</button>
-      </footer>
     </div>
   </div>
 
-  <script src="agent.js"></script>
+  <!-- App Container -->
+  <div id="app" class="d-flex">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Conversations</h5>
+        <button id="new-chat" class="btn btn-sm btn-primary">
+          <i class="fas fa-plus"></i> New
+        </button>
+      </div>
+      <div id="conversation-list" class="conversation-list"></div>
+      <div class="sidebar-footer mt-4 small text-muted">
+        <div>Messages: <span id="total-messages">0</span></div>
+        <div>Conversations: <span id="total-conversations">0</span></div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-fill d-flex flex-column">
+      <!-- Top Bar -->
+      <nav class="navbar navbar-light bg-light border-bottom px-3 d-flex justify-content-between">
+        <div class="fw-bold text-primary"><i class="fas fa-brain"></i> SynapseAI</div>
+        <div class="d-flex gap-2">
+          <button id="theme-toggle" class="btn btn-sm btn-outline-secondary"><i class="fas fa-moon"></i></button>
+          <button id="settings-toggle" class="btn btn-sm btn-outline-secondary"><i class="fas fa-cog"></i></button>
+        </div>
+      </nav>
+
+      <!-- Messages -->
+      <div id="messages-container" class="flex-fill overflow-auto p-3">
+        <div id="welcome-screen" class="text-center text-muted mt-5">
+          <i class="fas fa-robot fa-4x text-primary mb-3"></i>
+          <h2>Welcome to SynapseAI</h2>
+          <p>Your modern AI agent with multi-tool capabilities</p>
+        </div>
+        <div id="messages" class="messages"></div>
+      </div>
+
+      <!-- Input -->
+      <div class="border-top p-3">
+        <div class="input-group">
+          <textarea id="user-input" class="form-control" placeholder="Type your message..."></textarea>
+          <button id="send-message" class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="agent.js" type="application/javascript"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.hljs) hljs.highlightAll();
+    });
+  </script>
 </body>
 </html>
