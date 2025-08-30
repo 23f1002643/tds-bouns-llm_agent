@@ -20,7 +20,7 @@ class SynapseAI {
     console.log(`SynapseAI initialized`);
   }
 
-  selectors(){
+  selectors() {
     this.$ = {
       loading: document.getElementById('loading'),
       newConv: document.getElementById('new-conv'),
@@ -48,57 +48,57 @@ class SynapseAI {
       conversationsContainer: document.getElementById('conversations')
     };
     // populate settings UI
-    if(this.$.provider) this.$.provider.value = this.state.provider;
-    if(this.$.apikey) this.$.apikey.value = this.state.apiKey;
-    if(this.$.model) this.$.model.value = this.state.model;
-    if(this.$.maxtokens) this.$.maxtokens.value = this.state.maxTokens;
+    if (this.$.provider) this.$.provider.value = this.state.provider;
+    if (this.$.apikey) this.$.apikey.value = this.state.apiKey;
+    if (this.$.model) this.$.model.value = this.state.model;
+    if (this.$.maxtokens) this.$.maxtokens.value = this.state.maxTokens;
   }
 
-  hookEvents(){
+  hookEvents() {
     // composer
     this.$.composer?.addEventListener('submit', (e) => { e.preventDefault(); this.onSend(); });
     this.$.send?.addEventListener('click', () => this.onSend());
     this.$.input?.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); this.onSend(); }
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.onSend(); }
     });
 
     // quick prompts
     this.$.quicks?.forEach(b => b.addEventListener('click', e => {
       const p = e.currentTarget.dataset.prompt;
-      if(p){ this.$.input.value = p; this.onSend(); }
+      if (p) { this.$.input.value = p; this.onSend(); }
     }));
 
     // settings modal
-    this.$.settingsOpen?.addEventListener('click', ()=> this.openModal());
-    this.$.modalClose?.addEventListener('click', ()=> this.closeModal());
-    this.$.saveSettings?.addEventListener('click', ()=> this.saveSettings());
-    this.$.resetSettings?.addEventListener('click', ()=> this.resetSettings());
+    this.$.settingsOpen?.addEventListener('click', () => this.openModal());
+    this.$.modalClose?.addEventListener('click', () => this.closeModal());
+    this.$.saveSettings?.addEventListener('click', () => this.saveSettings());
+    this.$.resetSettings?.addEventListener('click', () => this.resetSettings());
 
     // other buttons
-    this.$.themeToggle?.addEventListener('click', ()=> this.toggleTheme());
-    this.$.exportBtn?.addEventListener('click', ()=> this.exportConversation());
-    this.$.clearBtn?.addEventListener('click', ()=> this.clearConversation());
-    this.$.newConvBtn?.addEventListener('click', ()=> this.createConversation());
+    this.$.themeToggle?.addEventListener('click', () => this.toggleTheme());
+    this.$.exportBtn?.addEventListener('click', () => this.exportConversation());
+    this.$.clearBtn?.addEventListener('click', () => this.clearConversation());
+    this.$.newConvBtn?.addEventListener('click', () => this.createConversation());
   }
 
-  hideLoading(){
-    if(this.$.loading) this.$.loading.style.display = 'none';
+  hideLoading() {
+    if (this.$.loading) this.$.loading.style.display = 'none';
   }
 
-  openModal(){
-    if(!this.$.modal) return;
-    this.$.modal.setAttribute('aria-hidden','false');
+  openModal() {
+    if (!this.$.modal) return;
+    this.$.modal.setAttribute('aria-hidden', 'false');
   }
-  closeModal(){
-    if(!this.$.modal) return;
-    this.$.modal.setAttribute('aria-hidden','true');
+  closeModal() {
+    if (!this.$.modal) return;
+    this.$.modal.setAttribute('aria-hidden', 'true');
   }
 
-  saveSettings(){
+  saveSettings() {
     this.state.provider = this.$.provider.value;
     this.state.apiKey = this.$.apikey.value.trim();
     this.state.model = this.$.model.value.trim();
-    this.state.maxTokens = parseInt(this.$.maxtokens.value || '1500',10);
+    this.state.maxTokens = parseInt(this.$.maxtokens.value || '1500', 10);
 
     localStorage.setItem('syn_provider', this.state.provider);
     localStorage.setItem('syn_apikey', this.state.apiKey);
@@ -108,7 +108,7 @@ class SynapseAI {
     this.toast('Settings saved');
   }
 
-  resetSettings(){
+  resetSettings() {
     localStorage.removeItem('syn_provider');
     localStorage.removeItem('syn_apikey');
     localStorage.removeItem('syn_model');
@@ -117,16 +117,15 @@ class SynapseAI {
     this.state.apiKey = '';
     this.state.model = '';
     this.state.maxTokens = 1500;
-    if(this.$.provider) this.$.provider.value = this.state.provider;
-    if(this.$.apikey) this.$.apikey.value = '';
-    if(this.$.model) this.$.model.value = '';
-    if(this.$.maxtokens) this.$.maxtokens.value = this.state.maxTokens;
+    if (this.$.provider) this.$.provider.value = this.state.provider;
+    if (this.$.apikey) this.$.apikey.value = '';
+    if (this.$.model) this.$.model.value = '';
+    if (this.$.maxtokens) this.$.maxtokens.value = this.state.maxTokens;
     this.toast('Settings reset');
   }
 
-  toast(text){
-    // simple ephemeral message (console fallback)
-    try{
+  toast(text) {
+    try {
       const el = document.createElement('div');
       el.textContent = text;
       el.style.position = 'fixed';
@@ -138,11 +137,11 @@ class SynapseAI {
       el.style.borderRadius = '8px';
       el.style.zIndex = 9999;
       document.body.appendChild(el);
-      setTimeout(()=> el.remove(),2200);
-    }catch(e){ console.log(text); }
+      setTimeout(() => el.remove(), 2200);
+    } catch (e) { console.log(text); }
   }
 
-  createConversation(){
+  createConversation() {
     const id = `c_${Date.now()}`;
     const conv = { id, title: 'New chat', messages: [] };
     this.state.conversations.set(id, conv);
@@ -151,54 +150,58 @@ class SynapseAI {
     this.loadConversation(id);
   }
 
-  renderConversations(){
+  renderConversations() {
     const container = this.$.conversationsContainer;
-    if(!container) return;
+    if (!container) return;
     container.innerHTML = '';
-    for(const conv of Array.from(this.state.conversations.values()).reverse()){
+    for (const conv of Array.from(this.state.conversations.values()).reverse()) {
       const el = document.createElement('div');
       el.className = 'conv';
       el.dataset.id = conv.id;
-      el.innerHTML = `<div class="meta"><div class="title">${this.escape(conv.title)}</div>
-        <div class="preview small">${this.escape(conv.messages.length ? conv.messages[conv.messages.length-1].content.slice(0,80) : 'No messages yet')}</div></div>`;
-      el.addEventListener('click', ()=> { this.loadConversation(conv.id); });
-      if(conv.id === this.state.currentId) el.classList.add('active');
+      el.innerHTML = `
+        <div class="meta">
+          <div class="title">${this.escape(conv.title)}</div>
+          <div class="preview small">
+            ${this.escape(conv.messages.length ? conv.messages[conv.messages.length - 1].content.slice(0, 80) : 'No messages yet')}
+          </div>
+        </div>`;
+      el.addEventListener('click', () => { this.loadConversation(conv.id); });
+      if (conv.id === this.state.currentId) el.classList.add('active');
       container.appendChild(el);
     }
   }
 
-  loadConversation(id){
+  loadConversation(id) {
     this.state.currentId = id;
     const conv = this.state.conversations.get(id);
-    if(!conv) return;
+    if (!conv) return;
     this.$.messages.innerHTML = '';
-    if(conv.messages.length === 0){
-      if(this.$.welcome) this.$.welcome.style.display = 'block';
+    if (conv.messages.length === 0) {
+      if (this.$.welcome) this.$.welcome.style.display = 'block';
     } else {
-      if(this.$.welcome) this.$.welcome.style.display = 'none';
+      if (this.$.welcome) this.$.welcome.style.display = 'none';
       conv.messages.forEach(m => this.renderMessage(m));
     }
     this.renderConversations();
     this.$.chatTitle?.innerText = conv.title || 'SynapseAI';
   }
 
-  appendMessage(role, content){
+  appendMessage(role, content) {
     const conv = this.state.conversations.get(this.state.currentId);
-    if(!conv) return;
+    if (!conv) return;
     const m = { role, content, ts: Date.now() };
     conv.messages.push(m);
     this.renderMessage(m);
     this.renderConversations();
   }
 
-  renderMessage(m){
+  renderMessage(m) {
     const wrapper = document.createElement('div');
-    wrapper.className = 'msg ' + (m.role === 'user' ? 'user' : (m.role === 'assistant' ? 'assistant' : 'assistant'));
-    // simple: display code blocks if triple backticks present
-    if(typeof m.content === 'string' && m.content.includes('```')){
-      // render as pre with highlight
+    wrapper.className = 'msg ' + (m.role === 'user' ? 'user' : 'assistant');
+
+    if (typeof m.content === 'string' && m.content.includes('```')) {
       const code = m.content.replace(/```[\s\S]*?```/g, match => {
-        const inner = match.replace(/```/g,'').trim();
+        const inner = match.replace(/```/g, '').trim();
         return `<pre><code>${this.escape(inner)}</code></pre>`;
       });
       wrapper.innerHTML = code;
@@ -209,186 +212,168 @@ class SynapseAI {
     this.$.messages.scrollTop = this.$.messages.scrollHeight;
   }
 
-  escape(s){ return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  escape(s) {
+    return String(s || '').replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
+    );
+  }
 
-  async onSend(){
+  async onSend() {
     const text = (this.$.input.value || '').trim();
-    if(!text) return;
+    if (!text) return;
     this.$.input.value = '';
-    // show in UI
     this.appendMessage('user', text);
-    // hide welcome
-    if(this.$.welcome) this.$.welcome.style.display = 'none';
-    // set conversation title (first user message)
+    if (this.$.welcome) this.$.welcome.style.display = 'none';
+
     const conv = this.state.conversations.get(this.state.currentId);
-    if(conv && (!conv.title || conv.title==='New chat')) conv.title = text.slice(0,60);
+    if (conv && (!conv.title || conv.title === 'New chat')) conv.title = text.slice(0, 60);
     this.renderConversations();
 
-    // run agent loop single iteration: send messages to model and handle tool calls
     try {
       await this.agentStep();
-    } catch(err){
+    } catch (err) {
       console.error('Agent error', err);
       this.appendMessage('assistant', `Error: ${err.message || err}`);
     }
   }
 
-  // single step: call model with conversation & return
-  async agentStep(){
-    if(this.state.isProcessing) return;
+  async agentStep() {
+    if (this.state.isProcessing) return;
     this.state.isProcessing = true;
 
     const conv = this.state.conversations.get(this.state.currentId);
-    if(!conv) { this.state.isProcessing = false; return; }
+    if (!conv) { this.state.isProcessing = false; return; }
 
-    // build messages for model (assistant/system/user roles)
-    const messages = conv.messages.map(m => {
-      return { role: m.role === 'user' ? 'user' : (m.role === 'assistant' ? 'assistant' : 'system'), content: m.content };
-    });
+    const messages = conv.messages.map(m => ({
+      role: m.role === 'user' ? 'user' : (m.role === 'assistant' ? 'assistant' : 'system'),
+      content: m.content
+    }));
 
-    // Model call
-    this.appendMessage('assistant', 'Thinking...'); // placeholder
+    this.appendMessage('assistant', 'Thinking...');
     const response = await this.callLLM(messages);
-    // remove the temporary thinking message (last assistant)
+
     const last = conv.messages.pop();
-    if(last && last.content === 'Thinking...'){
-      // remove last DOM msg
+    if (last && last.content === 'Thinking...') {
       const nodes = this.$.messages.querySelectorAll('.msg');
-      if(nodes.length) nodes[nodes.length-1].remove();
+      if (nodes.length) nodes[nodes.length - 1].remove();
     }
 
-    if(!response || !response.content){
+    if (!response || !response.content) {
       this.appendMessage('assistant', 'No response from model.');
       this.state.isProcessing = false;
       return;
     }
 
-    // If the model requests tools (tool_calls), we can simulate tool-calls handling
-    // For simplicity we accept responses like: { content: "...", tool_calls: [ {name:'web_search', args:{query:'xyz'}} ] }
     const parsed = response;
-    if(parsed.tool_calls && parsed.tool_calls.length){
-      // announce
+    if (parsed.tool_calls && parsed.tool_calls.length) {
       this.appendMessage('assistant', parsed.content || 'Using tools...');
-      for(const t of parsed.tool_calls){
+      for (const t of parsed.tool_calls) {
         const r = await this.executeTool(t);
-        this.appendMessage('assistant', `Tool result (${t.name}): ${typeof r === 'object' ? JSON.stringify(r,null,2) : String(r)}`);
+        this.appendMessage('assistant', `Tool result (${t.name}): ${typeof r === 'object' ? JSON.stringify(r, null, 2) : String(r)}`);
       }
-      // after tool outputs, append a small summary so model can continue
     } else {
-      // normal content
       this.appendMessage('assistant', parsed.content);
     }
 
     this.state.isProcessing = false;
   }
 
-  async callLLM(messages){
-    // messages: array {role, content}
+  async callLLM(messages) {
     const provider = this.state.provider;
     const apiKey = this.state.apiKey;
     const model = this.state.model || undefined;
     const maxTokens = this.state.maxTokens || 1500;
 
-    if(!apiKey){
-      // demo response
+    if (!apiKey) {
       return { content: "Demo mode — paste your AI Pipe/OpenAI key in Settings to use real models." };
     }
 
-    try{
-      if(provider === 'openai'){
+    try {
+      if (provider === 'openai') {
         const url = 'https://api.openai.com/v1/chat/completions';
-        const body = { model: model || 'gpt-4o-mini', messages: messages.map(m=>({role:m.role, content:m.content})), max_tokens: maxTokens, temperature:0.7 };
-        const resp = await fetch(url, { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify(body) });
-        if(!resp.ok) throw new Error(`OpenAI error ${resp.status}`);
+        const body = { model: model || 'gpt-4o-mini', messages, max_tokens: maxTokens, temperature: 0.7 };
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+          body: JSON.stringify(body)
+        });
+        if (!resp.ok) throw new Error(`OpenAI error ${resp.status}`);
         const data = await resp.json();
-        // support common shapes
         const msg = data?.choices?.[0]?.message?.content || data?.choices?.[0]?.text || JSON.stringify(data);
         return { content: msg };
       } else {
-        // default: aipipe proxy (openrouter-style)
         const url = 'https://aipipe.org/openrouter/v1/chat/completions';
-        const body = {
-          model: model || 'openai/gpt-4o-mini',
-          messages: messages.map(m => ({ role: m.role, content: m.content })),
-          max_tokens: maxTokens,
-          temperature: 0.7
-        };
-        const resp = await fetch(url, { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify(body) });
-        if(!resp.ok){
+        const body = { model: model || 'openai/gpt-4o-mini', messages, max_tokens: maxTokens, temperature: 0.7 };
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+          body: JSON.stringify(body)
+        });
+        if (!resp.ok) {
           const txt = await resp.text();
           throw new Error(`AI Pipe error ${resp.status}: ${txt}`);
         }
         const data = await resp.json();
-        // handle openai-like or openrouter-like responses
-        if(data.choices && data.choices.length){
+        if (data.choices && data.choices.length) {
           const m = data.choices[0].message || { content: data.choices[0].text || '' };
           return { content: m.content || m };
         }
-        // fallback
         return { content: JSON.stringify(data) };
       }
-    }catch(err){
+    } catch (err) {
       console.error('LLM call failed', err);
       return { content: `LLM call error: ${err.message || err}` };
     }
   }
 
-  // Tool dispatcher
-  async executeTool(toolCall){
-    // toolCall: { name, args }  (we'll accept either)
+  async executeTool(toolCall) {
     const name = toolCall.name || toolCall.function || toolCall.tool || toolCall.func;
     const args = toolCall.args || toolCall.arguments || {};
-    switch((name||'').toLowerCase()){
+    switch ((name || '').toLowerCase()) {
       case 'web_search':
       case 'search':
         return this.webSearch(args.query || args.q || args);
       case 'execute_code':
       case 'run_js':
         return this.executeCode(args.code || args);
-      case 'process_file':
-        return { error: 'process_file not implemented in demo' };
       default:
         return { error: `Unknown tool: ${name}` };
     }
   }
 
-  // Simulated web search (replace with a real search API if you have a key)
-  async webSearch(query){
-    if(!query) return { items: [] };
-    // Demo: return short simulated snippets
+  async webSearch(query) {
+    if (!query) return { items: [] };
     return {
       query,
       items: [
-        { title: `Result for "${query}" — demo snippet`, snippet: `This is a simulated snippet for "${query}". Replace with a real search API (Google Serper/Custom Search/Bing) for live results.` }
+        {
+          title: `Result for "${query}" — demo snippet`,
+          snippet: `This is a simulated snippet for "${query}". Replace with a real search API for live results.`
+        }
       ]
     };
   }
 
-  // Simple JS execution — WARNING: not secure; demo only
-  async executeCode(code){
-    if(!code) return 'No code provided';
-    // limit synchronous runtime by using Promise.race with timeout
-    try{
+  async executeCode(code) {
+    if (!code) return 'No code provided';
+    try {
       const run = () => new Promise((res, rej) => {
-        try{
-          // eslint-disable-next-line no-new-func
+        try {
           const fn = new Function('"use strict"; return (async ()=>{ ' + code + ' })()');
           Promise.resolve(fn()).then(r => res(r)).catch(e => rej(e));
-        }catch(e){
-          rej(e);
-        }
+        } catch (e) { rej(e); }
       });
-      const result = await Promise.race([ run(), new Promise((_,r)=> setTimeout(()=> r('Execution timed out (2s)'), 2000)) ]);
+      const result = await Promise.race([run(), new Promise((_, r) => setTimeout(() => r('Execution timed out (2s)'), 2000))]);
       return result;
-    }catch(e){
+    } catch (e) {
       return `Execution error: ${e.message || e}`;
     }
   }
 
-  exportConversation(){
+  exportConversation() {
     const conv = this.state.conversations.get(this.state.currentId);
-    if(!conv) return this.toast('No conversation to export');
-    const blob = new Blob([ JSON.stringify(conv, null, 2) ], { type: 'application/json' });
+    if (!conv) return this.toast('No conversation to export');
+    const blob = new Blob([JSON.stringify(conv, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = `${conv.title || 'synapse_conversation'}.json`;
@@ -397,9 +382,9 @@ class SynapseAI {
     this.toast('Exported conversation');
   }
 
-  clearConversation(){
+  clearConversation() {
     const conv = this.state.conversations.get(this.state.currentId);
-    if(!conv) return;
+    if (!conv) return;
     conv.messages = [];
     this.loadConversation(this.state.currentId);
     this.toast('Cleared conversation');
