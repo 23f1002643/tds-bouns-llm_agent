@@ -3,6 +3,8 @@
  * v2.8.0 (Updated: AI Pipe integration + bug fixes)
  * Author: Gaurav Tomar (Original) & Assistant (fixes)
  */
+const ENV_API_KEY = process.env.NEXT_PUBLIC_API_KEY || null;
+
 class GyaanSetu {
     constructor() {
         this.version = '2.8.0';
@@ -826,7 +828,7 @@ class GyaanSetu {
     }
 
     async fetchOpenAIModels() {
-        const apiKey = document.getElementById('api-key')?.value;
+        const apiKey = provider === 'aipipe' ? ENV_API_KEY : document.getElementById('api-key')?.value;
         if (!apiKey) throw new Error("API Key required for OpenAI");
         const response = await fetch('https://api.openai.com/v1/models', { headers: { 'Authorization': `Bearer ${apiKey}` } });
         if (!response.ok) { const err = await response.json().catch(()=>({})); throw new Error(err.error?.message || 'Invalid OpenAI Key'); }
@@ -837,7 +839,7 @@ class GyaanSetu {
     async fetchAnthropicModels() { return ["claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"]; }
 
     async fetchGoogleModels() {
-        const apiKey = document.getElementById('api-key')?.value;
+        const apiKey = provider === 'aipipe' ? ENV_API_KEY : document.getElementById('api-key')?.value;
         if (!apiKey) throw new Error("API Key required for Google");
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
         if (!response.ok) { const err = await response.json().catch(() => ({})); throw new Error(err.error?.message || 'Invalid Google Key'); }
